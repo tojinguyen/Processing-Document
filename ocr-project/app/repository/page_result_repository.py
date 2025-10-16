@@ -15,3 +15,6 @@ class PageResultRepository:
             raise
         finally:
             session.close()
+
+
+page_result_repo = PageResultRepository()

@@ -1,4 +1,3 @@
-import os
 import uuid
 from http import HTTPStatus
 from pathlib import Path
@@ -8,22 +7,19 @@ from fastapi.responses import JSONResponse
 from minio.error import S3Error
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.constant.constant import BUCKET_FILE_STORAGE
 from app.models.file import File as FileModel
 from app.models.task import Task, TaskStatus
 from app.repository.file_repository import file_repo
 from app.repository.task_repository import task_repo
 from app.services.file.file_service import FileService
-from app.services.minio.minio_service import (
-    ensure_bucket_exists,
-    get_minio_client,
-)
+from app.services.minio.minio_service import get_minio_client
 from app.storage.file_storage import FileStorage
 from app.worker.file_process_worker import process_file
 
-BUCKET_NAME = os.environ.get("BUCKET_NAME", "files")
 ALLOWED_CONTENT_TYPES = {"application/pdf", "image/png", "image/jpeg"}
 
-file_service = FileService(BUCKET_NAME, ALLOWED_CONTENT_TYPES)
+file_service = FileService(BUCKET_FILE_STORAGE, ALLOWED_CONTENT_TYPES)
 file_storage = FileStorage(get_minio_client())
 
 
@@ -47,8 +43,7 @@ async def upload_file(file: UploadFile = File(...)) -> JSONResponse:
     storage_path = f"{task_id}-{file.filename}-{file_extension}"
 
     try:
-        ensure_bucket_exists(BUCKET_NAME)
-        await file_storage.upload_file(file, storage_path, BUCKET_NAME)
+        await file_storage.upload_file(file, storage_path, BUCKET_FILE_STORAGE)
     except S3Error as e:
         return JSONResponse(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
