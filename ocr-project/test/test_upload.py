@@ -5,7 +5,6 @@ from pathlib import Path
 
 import requests
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -30,7 +29,10 @@ def test_file_upload(
             response = requests.post(api_url, files=files)
 
         logger.info(f"Status Code: {response.status_code}")
-        logger.info(f"Response: {response.json()}")
+        try:
+            logger.info(f"Response: {response.json()}")
+        except Exception:
+            logger.info(f"Response Text: {response.text}")
         return response
     except Exception as e:
         logger.error(

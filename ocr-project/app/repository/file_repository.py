@@ -1,41 +1,45 @@
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.db.session import session
+from app.db.session import SessionLocal
 from app.models.file import File
 
 
 class FileRepository:
-    def __init__(self) -> None:
-        self.session = session
-
-    def add(self, file: File) -> None:
+    def add(self, file: File) -> File:
+        session = SessionLocal()
         try:
-            self.session.add(file)
-            self.session.commit()
+            session.add(file)
+            session.flush()
+            session.commit()
+            session.refresh(file)
         except SQLAlchemyError:
-            self.session.rollback()
+            session.rollback()
             raise
         finally:
-            self.session.close()
+            session.close()
+
+        return file
 
     def get_by_id(self, file_id: str) -> File | None:
+        session = SessionLocal()
         try:
-            return self.session.query(File).filter(File.id == file_id).first()
+            return session.query(File).filter(File.id == file_id).first()
         except SQLAlchemyError:
-            self.session.rollback()
+            session.rollback()
             raise
         finally:
-            self.session.close()
+            session.close()
 
     def update(self, file: File) -> None:
+        session = SessionLocal()
         try:
-            self.session.merge(file)
-            self.session.commit()
+            session.merge(file)
+            session.commit()
         except SQLAlchemyError:
-            self.session.rollback()
+            session.rollback()
             raise
         finally:
-            self.session.close()
+            session.close()
 
 
 file_repo = FileRepository()
