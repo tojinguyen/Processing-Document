@@ -1,4 +1,4 @@
-import uuid
+import logging
 from http import HTTPStatus
 from pathlib import Path
 
@@ -17,11 +17,12 @@ from app.services.minio.minio_service import get_minio_client
 from app.storage.file_storage import FileStorage
 from app.worker.file_process_worker import process_file
 
+logger = logging.getLogger(__name__)
+
 ALLOWED_CONTENT_TYPES = {"application/pdf", "image/png", "image/jpeg"}
 
 file_service = FileService(BUCKET_FILE_STORAGE, ALLOWED_CONTENT_TYPES)
 file_storage = FileStorage(get_minio_client())
-
 
 router = APIRouter()
 
@@ -38,9 +39,8 @@ async def upload_file(file: UploadFile = File(...)) -> JSONResponse:
             },
         )
 
-    task_id = str(uuid.uuid4())
     file_extension = Path(file.filename).suffix
-    storage_path = f"{task_id}-{file.filename}-{file_extension}"
+    storage_path = f"{file.filename}-{file_extension}"
 
     try:
         await file_storage.upload_file(file, storage_path, BUCKET_FILE_STORAGE)
@@ -67,7 +67,12 @@ async def upload_file(file: UploadFile = File(...)) -> JSONResponse:
             status=TaskStatus.PENDING,
         )
         saved_task = task_repo.add(task_model)
-        process_file.delay(str(saved_task.id))
+        logger.info(
+            "Created task %s for file %s",
+            saved_task.id,
+            str(saved_file.id),
+        )
+        process_file.delay(saved_task.id)
     except SQLAlchemyError as e:
         return JSONResponse(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -81,7 +86,7 @@ async def upload_file(file: UploadFile = File(...)) -> JSONResponse:
         status_code=HTTPStatus.CREATED,
         content={
             "message": "File upload accepted and is being processed.",
-            "task_id": task_id,
+            "task_id": str(saved_task.id),
             "filename": file.filename,
             "status": TaskStatus.PENDING.value,
         },

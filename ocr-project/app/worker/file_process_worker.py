@@ -1,5 +1,6 @@
 import json
 import logging
+import uuid
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 @celery_app.task
-async def process_file(task_id: str) -> None:
+async def process_file(task_id: uuid.uuid4) -> None:
     task = task_repo.get_by_id(task_id)
     if not task:
         logger.error("Task with ID %s not found.", task_id)

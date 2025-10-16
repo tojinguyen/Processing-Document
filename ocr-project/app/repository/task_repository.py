@@ -5,16 +5,19 @@ from app.models.task import Task
 
 
 class TaskRepository:
-    def add(self, task: Task) -> None:
+    def add(self, task: Task) -> Task:
         session = SessionLocal()
         try:
             session.add(task)
             session.commit()
+            session.refresh(task)
+            session.expunge(task)
         except SQLAlchemyError:
             session.rollback()
             raise
         finally:
             session.close()
+        return task
 
     def get_by_id(self, task_id: str) -> Task | None:
         session = SessionLocal()

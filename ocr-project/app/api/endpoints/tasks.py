@@ -23,7 +23,11 @@ def get_task_status(task_id: str) -> JSONResponse:
             "task_id": str(task.id),
             "status": task.status.value,
             "error_message": task.error_message,
-            "created_at": task.created_at,
-            "updated_at": task.updated_at,
+            "created_at": task.created_at.isoformat()
+            if task.created_at
+            else None,
+            "updated_at": task.updated_at.isoformat()
+            if task.updated_at
+            else None,
         },
     )
