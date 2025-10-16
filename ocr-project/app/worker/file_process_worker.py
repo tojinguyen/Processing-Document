@@ -1,11 +1,13 @@
+import logging
+
 from app.models import Task
 from app.repository.file_repository import file_repo
 from app.repository.task_repository import task_repo
 
 from .celery import celery_app
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 @celery_app.task
 def process_file(file_id: str) -> None:

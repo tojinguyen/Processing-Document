@@ -1,7 +1,8 @@
+import logging
+
 from fastapi import FastAPI
 
 from app.api.endpoints import files
-import logging
 
 logging.basicConfig(level=logging.INFO)
 
