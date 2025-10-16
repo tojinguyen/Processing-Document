@@ -60,7 +60,7 @@ async def upload_file(file: UploadFile = File(...)) -> JSONResponse:
     )
 
     try:
-        file_repo.save(file_model)
+        file_repo.add(file_model)
     except SQLAlchemyError as e:
         return JSONResponse(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
