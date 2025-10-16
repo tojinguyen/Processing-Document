@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 @celery_app.task
-async def process_file(task_id: uuid.uuid4) -> None:
+def process_file(task_id: uuid.uuid4) -> None:
     task = task_repo.get_by_id(task_id)
     if not task:
         logger.error("Task with ID %s not found.", task_id)
@@ -68,14 +68,14 @@ async def process_file(task_id: uuid.uuid4) -> None:
         task_repo.update(task)
         return
 
-    ocr_result = await mock_ai_service(file_data, file.file_type)
+    ocr_result = mock_ai_service(file_data, file.file_type)
 
     # Create PageResult entries and store results
     for page_data in ocr_result.get("pages", []):
         page_number = page_data["page_number"]
         page_text = page_data["text"]
 
-        result_path = f"results/{file.id}/page_{page_number}.json"
+        result_path = f"{file.id}/page_{page_number}.json"
         result_content = json.dumps({"text": page_text})
 
         logger.info(
@@ -113,7 +113,7 @@ async def process_file(task_id: uuid.uuid4) -> None:
     task_repo.update(task)
 
 
-async def mock_ai_service(file_data: bytes, file_type: str) -> dict:
+def mock_ai_service(file_data: bytes, file_type: str) -> dict:
     logger.info("Mock AI service processing file of type %s", file_type)
     logger.debug("File data size: %d bytes", len(file_data))
     if "pdf" in file_type:

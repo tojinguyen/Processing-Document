@@ -1,4 +1,5 @@
 import logging
+import uuid
 from http import HTTPStatus
 from pathlib import Path
 
@@ -39,8 +40,9 @@ async def upload_file(file: UploadFile = File(...)) -> JSONResponse:
             },
         )
 
+    file_id = uuid.uuid4()
     file_extension = Path(file.filename).suffix
-    storage_path = f"{file.filename}-{file_extension}"
+    storage_path = f"{file_id!s}-{file.filename}-{file_extension}"
 
     try:
         await file_storage.upload_file(file, storage_path, BUCKET_FILE_STORAGE)
@@ -54,6 +56,7 @@ async def upload_file(file: UploadFile = File(...)) -> JSONResponse:
         )
 
     file_model = FileModel(
+        id=file_id,
         filename=file.filename,
         storage_path=storage_path,
         file_type=file.content_type,
