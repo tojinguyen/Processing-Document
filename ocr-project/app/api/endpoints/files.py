@@ -3,12 +3,15 @@ import uuid
 from http import HTTPStatus
 from pathlib import Path
 
-from fastapi import APIRouter, File, UploadFile
+from celery.exceptions import CeleryError
+from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import JSONResponse
 from minio.error import S3Error
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from app.constant.constant import BUCKET_FILE_STORAGE
+from app.db.dependencies import get_db_session
 from app.models.file import File as FileModel
 from app.models.task import Task, TaskStatus
 from app.repository.file_repository import file_repo
@@ -29,7 +32,10 @@ router = APIRouter()
 
 
 @router.post("/files", status_code=HTTPStatus.CREATED)
-async def upload_file(file: UploadFile = File(...)) -> JSONResponse:
+async def upload_file(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db_session),
+) -> JSONResponse:
     if not file_service.is_allowed_file_type(file.content_type):
         return JSONResponse(
             status_code=HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
@@ -42,7 +48,7 @@ async def upload_file(file: UploadFile = File(...)) -> JSONResponse:
 
     file_id = uuid.uuid4()
     file_extension = Path(file.filename).suffix
-    storage_path = f"{file_id!s}-{file.filename}-{file_extension}"
+    storage_path = f"{file_id!s}{file_extension}"
 
     try:
         await file_storage.upload_file(file, storage_path, BUCKET_FILE_STORAGE)
@@ -63,25 +69,54 @@ async def upload_file(file: UploadFile = File(...)) -> JSONResponse:
     )
 
     try:
-        saved_file = file_repo.add(file_model)
+        saved_file = file_repo.add(db, file_model)
 
         task_model = Task(
             file_id=saved_file.id,
             status=TaskStatus.PENDING,
         )
         saved_task = task_repo.add(task_model)
-        logger.info(
-            "Created task %s for file %s",
-            saved_task.id,
-            str(saved_file.id),
-        )
+
         process_file.delay(saved_task.id)
+
+        db.commit()
+        db.refresh(saved_task)
     except SQLAlchemyError as e:
+        db.rollback()
+        logger.exception(
+            "Failed to save file metadata or task to database",
+        )
+        get_minio_client().remove_object(BUCKET_FILE_STORAGE, storage_path)
         return JSONResponse(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             content={
                 "code": HTTPStatus.INTERNAL_SERVER_ERROR,
                 "message": f"Failed to save file metadata to database: {e}",
+            },
+        )
+    except CeleryError as e:
+        db.rollback()
+        logger.exception(
+            "Failed to queue task for file %s",
+            saved_file.id,
+        )
+        get_minio_client().remove_object(BUCKET_FILE_STORAGE, storage_path)
+        return JSONResponse(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            content={
+                "code": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "message": f"Failed to queue file processing task: {e}",
+            },
+        )
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to save file metadata to database")
+        get_minio_client().remove_object(BUCKET_FILE_STORAGE, storage_path)
+        return JSONResponse(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            content={
+                "code": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "message": "Server error occurred while processing the file.",
             },
         )
 

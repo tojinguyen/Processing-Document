@@ -24,12 +24,6 @@ class Task(Base):
         ForeignKey("files.id"),
         nullable=False,
     )
-    task_id = Column(
-        UUID(as_uuid=True),
-        nullable=False,
-        unique=True,
-        default=uuid.uuid4,
-    )
     status = Column(
         Enum(TaskStatus),
         nullable=False,
@@ -44,4 +38,5 @@ class Task(Base):
         nullable=False,
     )
 
-    file = relationship("File", backref="task", uselist=False)
+    file = relationship("File", back_populates="task")
+    page_results = relationship("PageResult", back_populates="task")
