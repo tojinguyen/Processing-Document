@@ -17,4 +17,6 @@ COPY . .
 
 EXPOSE 8000
 
+RUN uv run alembic --version
+
 CMD ["uv", "run", "python", "app/main.py"]

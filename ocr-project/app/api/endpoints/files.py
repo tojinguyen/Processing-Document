@@ -75,7 +75,7 @@ async def upload_file(
             file_id=saved_file.id,
             status=TaskStatus.PENDING,
         )
-        saved_task = task_repo.add(task_model)
+        saved_task = task_repo.add(db, task_model)
 
         process_file.delay(saved_task.id)
 
