@@ -4,7 +4,9 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: ^test/
       - id: end-of-file-fixer
+        exclude: ^test/
       - id: check-yaml
       - id: check-added-large-files
         args:
@@ -28,16 +30,19 @@ repos:
       - id: codespell
         args:
           - --ignore-words-list=NIN,selectin,braket
+        exclude: ^test/
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.15.0
     hooks:
       - id: mypy
-        files: ^(app/|tests/)
+        files: ^(app/)
+        exclude: ^test/
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.11
     hooks:
       - id: ruff-check
         args:
           - --fix
-        exclude: alembic/
+        exclude: alembic/|test/
       - id: ruff-format
+        exclude: ^test/

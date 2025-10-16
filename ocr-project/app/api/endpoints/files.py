@@ -26,7 +26,7 @@ file_storage = FileStorage(BUCKET_NAME)
 router = APIRouter()
 
 
-@router.post("/files", status_code=HTTPStatus.ACCEPTED)
+@router.post("/files", status_code=HTTPStatus.CREATED)
 async def upload_file(file: UploadFile = File(...)) -> JSONResponse:
     if not file_service.is_allowed_file_type(file.content_type):
         return JSONResponse(
