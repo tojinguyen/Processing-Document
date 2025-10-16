@@ -10,5 +10,3 @@ if not database_exists(engine.url):
     create_database(engine.url)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-session = SessionLocal()
