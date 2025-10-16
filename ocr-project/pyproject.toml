@@ -1,0 +1,115 @@
+[project]
+name = "ocr-project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.17.0",
+    "annotated-types==0.7.0",
+    "anyio==4.11.0",
+    "argon2-cffi==25.1.0",
+    "argon2-cffi-bindings==25.1.0",
+    "celery>=5.5.3",
+    "certifi==2025.10.5",
+    "cffi==2.0.0",
+    "cfgv==3.4.0",
+    "click==8.3.0",
+    "distlib==0.4.0",
+    "dnspython==2.8.0",
+    "email-validator==2.3.0",
+    "fastapi==0.119.0",
+    "filelock==3.20.0",
+    "greenlet==3.2.4",
+    "h11==0.16.0",
+    "identify==2.6.15",
+    "idna==3.11",
+    "minio==7.2.18",
+    "mypy==1.18.2",
+    "mypy-extensions==1.1.0",
+    "nodeenv==1.9.1",
+    "pathspec==0.12.1",
+    "platformdirs==4.5.0",
+    "pre-commit==4.3.0",
+    "psycopg>=3.2.10",
+    "psycopg2-binary==2.9.11",
+    "pycparser==2.23",
+    "pycryptodome==3.23.0",
+    "pydantic==2.12.1",
+    "pydantic-core==2.41.3",
+    "pydantic-settings==2.11.0",
+    "python-dotenv==1.1.1",
+    "python-multipart>=0.0.20",
+    "pyyaml==6.0.3",
+    "sniffio==1.3.1",
+    "sqlalchemy==2.0.44",
+    "sqlmodel>=0.0.27",
+    "starlette==0.48.0",
+    "typing-extensions==4.15.0",
+    "typing-inspection==0.4.2",
+    "urllib3==2.5.0",
+    "uvicorn==0.37.0",
+    "virtualenv==20.35.3",
+]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "ANN401",  # any-type
+    "B008",
+    "C901",  # complex-structure
+    "D100",  # undocumented-public-module
+    "D101",  # undocumented-public-class
+    "D102",  # undocumented-public-method
+    "D103",  # undocumented-public-function
+    "D104",  # undocumented-public-package
+    "D105",  # undocumented-magic-method
+    "D106",  # undocumented-public-nested-class
+    "D107",  # undocumented-public-init
+    "D203",  # one-blank-line-before-class
+    "D213",  # multi-line-summary-second-line
+    "EM101",  # raw-string-in-exception
+    "EM102",  # f-string-in-exception
+    "FA102",  # future-required-type-annotation
+    "FIX002",  # line-contains-todo
+    "N815",  # mixed-case-variable-in-class-scope
+    "PLR0911",  # too-many-return-statements
+    "PLR0913",  # too-many-arguments
+    "RUF001",  # ambiguous-unicode-character-string
+    "S105",
+    "TD002",  # missing-todo-author
+    "TD003",  # missing-todo-link
+    "TID252",  # relative-imports
+    "TRY003",  # raise-vanilla-args
+    "FAST001",
+    "FAST002",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**.py" = [
+  "PLR2004",
+  "S101",  # assert
+  "S106",
+  "SLF001",
+]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["app", "tests"]
+check_untyped_defs = true
+disallow_untyped_defs = true  # for strict mypy: (this is the tricky one :-))
+disallow_untyped_calls = true
+disallow_any_generics = true
+ignore_missing_imports = true
+no_implicit_reexport = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
