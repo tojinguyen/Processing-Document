@@ -9,14 +9,16 @@ from minio.error import S3Error
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.models.file import File as FileModel
-from app.models.task import TaskStatus
+from app.models.task import Task, TaskStatus
 from app.repository.file_repository import file_repo
+from app.repository.task_repository import task_repo
 from app.services.file.file_service import FileService
 from app.services.minio.minio_service import (
     ensure_bucket_exists,
     get_minio_client,
 )
 from app.storage.file_storage import FileStorage
+from app.worker.file_process_worker import process_file
 
 BUCKET_NAME = os.environ.get("BUCKET_NAME", "files")
 ALLOWED_CONTENT_TYPES = {"application/pdf", "image/png", "image/jpeg"}
@@ -64,7 +66,13 @@ async def upload_file(file: UploadFile = File(...)) -> JSONResponse:
 
     try:
         saved_file = file_repo.add(file_model)
-        file_model_id = saved_file.id
+
+        task_model = Task(
+            file_id=saved_file.id,
+            status=TaskStatus.PENDING,
+        )
+        saved_task = task_repo.add(task_model)
+        process_file.delay(str(saved_task.id))
     except SQLAlchemyError as e:
         return JSONResponse(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -73,9 +81,6 @@ async def upload_file(file: UploadFile = File(...)) -> JSONResponse:
                 "message": f"Failed to save file metadata to database: {e}",
             },
         )
-
-    if file_model_id:
-        pass
 
     return JSONResponse(
         status_code=HTTPStatus.CREATED,
