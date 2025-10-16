@@ -78,6 +78,13 @@ async def process_file(task_id: uuid.uuid4) -> None:
         result_path = f"results/{file.id}/page_{page_number}.json"
         result_content = json.dumps({"text": page_text})
 
+        logger.info(
+            "Uploading result for file %s, page %d to %s",
+            file.id,
+            page_number,
+            result_path,
+        )
+
         result_storage.upload_result(
             result_content,
             result_path,
@@ -91,6 +98,11 @@ async def process_file(task_id: uuid.uuid4) -> None:
             result_path=result_path,
         )
         page_result_repo.add(page_result_entry)
+        logger.info(
+            "Saved PageResult for file %s, page %d",
+            file.id,
+            page_number,
+        )
 
     # Update file and task status
     file.total_pages = ocr_result.get("total_pages")
